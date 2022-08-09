@@ -1,0 +1,1 @@
+V1.0 of the stopwatch uses INT0 INT1 and timer0, contains start/stop with the ability to continue from where you started.
