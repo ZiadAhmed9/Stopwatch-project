@@ -10,14 +10,14 @@
 unsigned char second = 0;
 unsigned char minute = 0;
 unsigned char count=0;
-unsigned char del=0;
+volatile  int del=0;
 //first we initialize the timer
 
 
 ISR(TIMER0_OVF_vect)
 {
 	count++;
-	if(count==1)
+	if(count==4)
 	{
 		second++;
 		if(second==60)
@@ -51,13 +51,36 @@ ISR(INT0_vect)
 	TIMSK|=(1<<TOIE0);
 }
 
-void INT1_init_pause_reset(void)
+void INT1_init_pause(void)
 {
 	DDRD&=~(1<<PD3);
 	PORTD|=(1<<PD3); //internal pull up enabled
 	GICR|=(1<<INT1);
-	MCUCR|=(1<<ISC01);  //FALLING EDGE
+	MCUCR|=(1<<ISC11);  //FALLING EDGE
 	SREG|=(1<<7);   //ENABLE GLOBAL INTERRUPT
+
+}
+void init_reset(void)
+{
+	second=0;
+	minute=0;
+	TCNT0=6;
+	PORTC=0xf0;
+	_delay_ms(250);
+	PORTC^=0xf0;
+	_delay_ms(250);
+	PORTC^=0xf0;
+	_delay_ms(250);
+	PORTC^=0xf0;
+	_delay_ms(250);
+	PORTC^=0xf0;
+	_delay_ms(250);
+	PORTC^=0xf0;
+	_delay_ms(250);
+	PORTC^=0xf0;
+	_delay_ms(250);
+	PORTC^=0xf0;
+	_delay_ms(250);
 }
 
 ISR(INT1_vect)
@@ -71,24 +94,40 @@ int main()
 	PORTC|=((1<<4)|(1<<5)|(1<<6)|(1<<7));
 	PORTC&=~((1<<0)|(1<<1)|(1<<2)|(1<<3));
 	INT0_init_start();
-	INT1_init_pause_reset();
+	INT1_init_pause();
 	while(1)
 	{
+		del=0;
 
-				//s = 13
 				PORTC = second % 10;
 				PORTC|= (1<<4);
 
-				_delay_ms(5);
+				_delay_ms(1);
 				PORTC = second / 10;
 				PORTC|= (1<<5);
 
-				_delay_ms(5);
+				_delay_ms(1);
 				PORTC = minute % 10;
 				PORTC|= (1<<6);
-				_delay_ms(5);
+				_delay_ms(1);
 				PORTC = minute / 10;
 				PORTC|= (1<<7);
-				_delay_ms(5);
+				_delay_ms(1);
+				//we check now if the stop button is on hold
+				while(!(PIND&(1<<PD3)))
+				{
+						del++;
+						if(del==30000)
+						{
+							init_reset();
+						}
+
+				}
+
+
+
+
+
+
 	}
 }
